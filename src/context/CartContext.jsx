@@ -1,25 +1,71 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { 
+  saveToLocalStorage, 
+  loadFromLocalStorage, 
+  isLocalStorageAvailable 
+} from '../utils/localStorage';
 
 export const CartContext = createContext();
 
 export const useCart = () => useContext(CartContext);
 
+const STORAGE_KEYS = {
+  CART: 'shopping-cart',
+  COUPON: 'shopping-coupon'
+};
+
+const VALID_COUPON = "WEB3BRIDGECHECKOUT";
+const DISCOUNT_PERCENTAGE = 10;
+
 export const CartProvider = ({ children }) => {
+  const storageAvailable = isLocalStorageAvailable();
+  
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    if (storageAvailable) {
+      return loadFromLocalStorage(STORAGE_KEYS.CART, []);
+    }
+    return [];
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   
+  // State for total amounts and discount
+  const [subtotal, setSubtotal] = useState(0);
+  const [couponCode, setCouponCode] = useState(() => {
+    if (storageAvailable) {
+      return loadFromLocalStorage(STORAGE_KEYS.COUPON, '');
+    }
+    return '';
+  });
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [total, setTotal] = useState(0);
+  const [couponError, setCouponError] = useState('');
+  const [couponSuccess, setCouponSuccess] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    const newSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    setSubtotal(newSubtotal);
     
-    const newTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    setTotal(newTotal);
-  }, [cart]);
+    if (couponCode === VALID_COUPON) {
+      const discount = (newSubtotal * DISCOUNT_PERCENTAGE) / 100;
+      setDiscountAmount(discount);
+      setTotal(newSubtotal - discount);
+      
+      if (!couponSuccess) {
+        setCouponSuccess(`${DISCOUNT_PERCENTAGE}% discount applied!`);
+      }
+    } else {
+      setDiscountAmount(0);
+      setTotal(newSubtotal);
+      setCouponSuccess('');
+    }
+    
+    if (storageAvailable) {
+      saveToLocalStorage(STORAGE_KEYS.CART, cart);
+      saveToLocalStorage(STORAGE_KEYS.COUPON, couponCode);
+    }
+  }, [cart, couponCode, couponSuccess, storageAvailable]);
 
   const addToCart = (product) => {
     setCart(prevCart => {
@@ -62,6 +108,33 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCart([]);
+    removeCoupon();
+  };
+
+  const applyCoupon = (code) => {
+    setCouponError('');
+    setCouponSuccess('');
+    
+    if (!code.match(/^[a-zA-Z0-9]+$/)) {
+      setCouponError('Invalid coupon format. Please use letters and numbers only.');
+      return false;
+    }
+    
+    if (code === VALID_COUPON) {
+      setCouponCode(code);
+      setCouponSuccess(`${DISCOUNT_PERCENTAGE}% discount applied!`);
+      return true;
+    } else {
+      setCouponError('Invalid coupon code.');
+      setCouponCode('');
+      return false;
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setCouponError('');
+    setCouponSuccess('');
   };
 
   const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
@@ -76,11 +149,19 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     removeItem,
     clearCart,
+    subtotal,
+    discountAmount,
     total,
     itemCount,
     isCartOpen,
     toggleCart,
-    setIsCartOpen
+    setIsCartOpen,
+    couponCode,
+    applyCoupon,
+    removeCoupon,
+    couponError,
+    couponSuccess,
+    storageAvailable
   };
 
   return (
