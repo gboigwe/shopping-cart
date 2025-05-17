@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { 
   saveToLocalStorage, 
@@ -30,7 +29,6 @@ export const CartProvider = ({ children }) => {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   
-  // State for total amounts and discount
   const [subtotal, setSubtotal] = useState(0);
   const [couponCode, setCouponCode] = useState(() => {
     if (storageAvailable) {
