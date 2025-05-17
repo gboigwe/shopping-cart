@@ -1,38 +1,18 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import ProductCard from '../components/ProductCard';
+import CartButton from '../components/CartButton';
 import products from '../utils/productData';
+import { useCart } from '../context/CartContext';
 import '../styles/Products.css';
 
 const Products = () => {
-  const [cart, setCart] = useState([]);
-  
-  const addToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id === product.id 
-          ? { ...item, quantity: item.quantity + 1 } 
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-    
-    alert(`${product.name} added to cart!`);
-  };
+  const { addToCart } = useCart();
   
   return (
     <div className="products-container">
       <header className="header">
         <h1>Tech Store</h1>
-        <div className="cart-icon">
-          <Link to="/checkout">
-            <span className="cart-count">{cart.reduce((total, item) => total + item.quantity, 0)}</span>
-            🛒
-          </Link>
-        </div>
+        <CartButton />
       </header>
       
       <main>
