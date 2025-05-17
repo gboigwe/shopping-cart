@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import CartSummary from './CartSummary';
 import '../styles/CartSidebar.css';
 
 const CartSidebar = () => {
@@ -10,7 +10,6 @@ const CartSidebar = () => {
     toggleCart, 
     removeItem, 
     updateQuantity, 
-    total, 
     itemCount 
   } = useCart();
 
@@ -24,6 +23,7 @@ const CartSidebar = () => {
           <button 
             className="close-cart-btn"
             onClick={toggleCart}
+            aria-label="Close cart"
           >
             &times;
           </button>
@@ -54,6 +54,7 @@ const CartSidebar = () => {
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         disabled={item.quantity <= 1}
+                        aria-label="Decrease quantity"
                       >
                         -
                       </button>
@@ -68,8 +69,12 @@ const CartSidebar = () => {
                           }
                         }}
                         className="quantity-input"
+                        aria-label="Quantity"
                       />
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                      <button 
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        aria-label="Increase quantity"
+                      >
                         +
                       </button>
                     </div>
@@ -81,6 +86,7 @@ const CartSidebar = () => {
                     <button 
                       onClick={() => removeItem(item.id)}
                       className="remove-item-btn"
+                      aria-label="Remove item"
                     >
                       Remove
                     </button>
@@ -89,21 +95,7 @@ const CartSidebar = () => {
               ))}
             </div>
             
-            <div className="cart-summary">
-              <div className="cart-total">
-                <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
-              </div>
-              
-              <div className="cart-actions">
-                <button onClick={toggleCart} className="continue-shopping-btn">
-                  Continue Shopping
-                </button>
-                <Link to="/checkout" className="checkout-btn">
-                  Proceed to Checkout
-                </Link>
-              </div>
-            </div>
+            <CartSummary />
           </>
         )}
       </div>
