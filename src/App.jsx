@@ -3,6 +3,7 @@ import Products from './pages/Products';
 // import Checkout from './pages/Checkout';
 import { CartProvider } from './context/CartContext';
 import CartSidebar from './components/CartSidebar';
+import StorageWarning from './components/StorageWarning';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           {/* <Route path="/checkout" element={<Checkout />} /> */}
         </Routes>
         <CartSidebar />
+        <StorageWarning />
       </Router>
     </CartProvider>
   );

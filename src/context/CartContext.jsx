@@ -1,23 +1,40 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { 
+  saveToLocalStorage, 
+  loadFromLocalStorage, 
+  isLocalStorageAvailable 
+} from '../utils/localStorage';
 
 export const CartContext = createContext();
 
 export const useCart = () => useContext(CartContext);
 
+const STORAGE_KEYS = {
+  CART: 'shopping-cart',
+  COUPON: 'shopping-coupon'
+};
+
 const VALID_COUPON = "WEB3BRIDGECHECKOUT";
 const DISCOUNT_PERCENTAGE = 10;
 
 export const CartProvider = ({ children }) => {
+  const storageAvailable = isLocalStorageAvailable();
+  
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    if (storageAvailable) {
+      return loadFromLocalStorage(STORAGE_KEYS.CART, []);
+    }
+    return [];
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   const [subtotal, setSubtotal] = useState(0);
   const [couponCode, setCouponCode] = useState(() => {
-    return localStorage.getItem('couponCode') || '';
+    if (storageAvailable) {
+      return loadFromLocalStorage(STORAGE_KEYS.COUPON, '');
+    }
+    return '';
   });
   const [discountAmount, setDiscountAmount] = useState(0);
   const [total, setTotal] = useState(0);
@@ -25,9 +42,6 @@ export const CartProvider = ({ children }) => {
   const [couponSuccess, setCouponSuccess] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    localStorage.setItem('couponCode', couponCode);
-    
     const newSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     setSubtotal(newSubtotal);
     
@@ -44,7 +58,12 @@ export const CartProvider = ({ children }) => {
       setTotal(newSubtotal);
       setCouponSuccess('');
     }
-  }, [cart, couponCode]);
+    
+    if (storageAvailable) {
+      saveToLocalStorage(STORAGE_KEYS.CART, cart);
+      saveToLocalStorage(STORAGE_KEYS.COUPON, couponCode);
+    }
+  }, [cart, couponCode, couponSuccess, storageAvailable]);
 
   const addToCart = (product) => {
     setCart(prevCart => {
@@ -87,6 +106,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCart([]);
+    removeCoupon();
   };
 
   const applyCoupon = (code) => {
@@ -138,7 +158,8 @@ export const CartProvider = ({ children }) => {
     applyCoupon,
     removeCoupon,
     couponError,
-    couponSuccess
+    couponSuccess,
+    storageAvailable
   };
 
   return (
